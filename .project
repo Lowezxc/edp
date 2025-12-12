@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>PeekAPookie</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.jdt.core.javabuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.jdt.core.javanature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>images/background.png</name>
+			<type>1</type>
+			<location>C:/Users/John/Documents/edp game/background.png</location>
+		</link>
+		<link>
+			<name>images/heart.png</name>
+			<type>1</type>
+			<location>C:/Users/John/Documents/edp game/heart.png</location>
+		</link>
+		<link>
+			<name>images/hole.png</name>
+			<type>1</type>
+			<location>C:/Users/John/Documents/edp game/hole.png</location>
+		</link>
+		<link>
+			<name>images/pookie.png</name>
+			<type>1</type>
+			<location>C:/Users/John/Documents/edp game/pookie.png</location>
+		</link>
+		<link>
+			<name>images/timer.png</name>
+			<type>1</type>
+			<location>C:/Users/John/Documents/edp game/timer.png</location>
+		</link>
+		<link>
+			<name>src/background.png</name>
+			<type>1</type>
+			<location>C:/Users/John/Documents/edp game/background.png</location>
+		</link>
+		<link>
+			<name>src/bomb.png</name>
+			<type>1</type>
+			<location>C:/Users/John/Documents/edp game/bomb.png</location>
+		</link>
+		<link>
+			<name>src/heart.png</name>
+			<type>1</type>
+			<location>C:/Users/John/Documents/edp game/heart.png</location>
+		</link>
+		<link>
+			<name>src/hole.png</name>
+			<type>1</type>
+			<location>C:/Users/John/Documents/edp game/hole.png</location>
+		</link>
+		<link>
+			<name>src/menu.png</name>
+			<type>1</type>
+			<location>C:/Users/John/Documents/edp game/menu.png</location>
+		</link>
+		<link>
+			<name>src/pookie.png</name>
+			<type>1</type>
+			<location>C:/Users/John/Documents/edp game/pookie.png</location>
+		</link>
+		<link>
+			<name>src/timer.png</name>
+			<type>1</type>
+			<location>C:/Users/John/Documents/edp game/timer.png</location>
+		</link>
+	</linkedResources>
+	<filteredResources>
+		<filter>
+			<id>1765543097957</id>
+			<name></name>
+			<type>30</type>
+			<matcher>
+				<id>org.eclipse.core.resources.regexFilterMatcher</id>
+				<arguments>node_modules|\.git|__CREATED_BY_JAVA_LANGUAGE_SERVER__</arguments>
+			</matcher>
+		</filter>
+	</filteredResources>
+</projectDescription>
