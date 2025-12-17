@@ -5,7 +5,10 @@ import java.awt.*;
 
 public class PausePanel extends JPanel {
 
+    private Difficulty difficulty;
+
     public PausePanel(JFrame frame, GamePanel gamePanel) {
+        this.difficulty = gamePanel.gameDifficulty;
         this.setPreferredSize(new Dimension(GamePanel.SCREEN_WIDTH, GamePanel.SCREEN_HEIGHT));
         this.setLayout(null);
 
@@ -26,6 +29,7 @@ public class PausePanel extends JPanel {
             gamePanel.spawnTimer.start();
             gamePanel.gameTimer.start();
             gamePanel.animationTimer.start();
+            gamePanel.effectTimer.start();
         });
         this.add(continueButton);
 
@@ -34,7 +38,7 @@ public class PausePanel extends JPanel {
         restartButton.setBounds(GamePanel.SCREEN_WIDTH/2 - 150, 350, 300, 60);
         restartButton.setFont(new Font("Serif", Font.BOLD, 28));
         restartButton.addActionListener(e -> {
-            frame.setContentPane(new GamePanel());
+            frame.setContentPane(new GamePanel(difficulty));
             frame.revalidate();
         });
         this.add(restartButton);

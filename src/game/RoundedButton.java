@@ -24,13 +24,23 @@ public class RoundedButton extends JButton {
         g2.setColor(new Color(255, 182, 193));
         g2.fillRoundRect(0, 0, getWidth(), getHeight(), 40, 40);
 
-        // White centered text
-        FontMetrics fm = g2.getFontMetrics();
-        int textX = (getWidth() - fm.stringWidth(getText())) / 2;
-        int textY = (getHeight() + fm.getAscent()) / 2 - 4;
+        // White centered multi-line text
         g2.setColor(Color.WHITE);
-        g2.setFont(getFont());
-        g2.drawString(getText(), textX, textY);
+        Font baseFont = getFont();
+        Font boldFont = baseFont.deriveFont(Font.BOLD, baseFont.getSize() + 4);
+        String[] lines = getText().split("\n");
+        int lineHeight = baseFont.getSize() + 8; // approximate line height
+        int totalHeight = lines.length * lineHeight;
+        int startY = (getHeight() - totalHeight) / 2 + baseFont.getSize();
+
+        for (int i = 0; i < lines.length; i++) {
+            Font font = (i == 0) ? boldFont : baseFont;
+            g2.setFont(font);
+            FontMetrics fm = g2.getFontMetrics(font);
+            int textX = (getWidth() - fm.stringWidth(lines[i])) / 2;
+            int textY = startY + i * lineHeight;
+            g2.drawString(lines[i], textX, textY);
+        }
 
         g2.dispose();
     }

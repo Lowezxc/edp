@@ -16,25 +16,65 @@ public class GamePanel extends JPanel implements ActionListener {
     static final int SCREEN_WIDTH = 1280;
     static final int SCREEN_HEIGHT = 720;
 
-    BufferedImage background, holeImg, pookieImg, bombImg, timerImg, menuImg, heartImg;
+    BufferedImage background, holeImg, pookieImg, bombImg, timerImg, menuImg, heartImg, powerupHeartImg, powerupClockImg, powerupStarImg;
 
+    Difficulty gameDifficulty;
     int score = 0;
-    int lives = 3;
-    int timeLeft = 60;
-    int difficulty = 1;
+    int lives;
+    int timeLeft;
+    int difficultyLevel = 1;
     int highestScore = 0; // 🏆 Track the best score
+    int bombProbability; // percentage
+    int speedIncreaseInterval; // seconds
+    int maxDifficultyLevel;
+    int maxLives;
+    int scoreMultiplier = 1;
+    boolean slowMotionActive = false;
+    int slowMotionTimeLeft = 0;
+    boolean doublePointsActive = false;
+    int doublePointsTimeLeft = 0;
+    int timeTick = 0;
 
     Rectangle[] holePositions;
     ArrayList<PoppingObject> activeObjects = new ArrayList<>();
 
-    Timer spawnTimer, gameTimer, animationTimer;
+    Timer spawnTimer, gameTimer, animationTimer, effectTimer;
     Random random = new Random();
     Clip bgMusic;
 
-    public GamePanel() {
+    public GamePanel(Difficulty difficulty) {
+        this.gameDifficulty = difficulty;
         this.setPreferredSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
         this.setFocusable(true);
         this.setOpaque(false);
+
+        // Set parameters based on difficulty
+        switch (difficulty) {
+            case EASY:
+                lives = 5;
+                maxLives = 5;
+                timeLeft = 90;
+                bombProbability = 10;
+                speedIncreaseInterval = 15;
+                maxDifficultyLevel = 3;
+                break;
+            case MEDIUM:
+                lives = 3;
+                maxLives = 3;
+                timeLeft = 60;
+                bombProbability = 25;
+                speedIncreaseInterval = 10;
+                maxDifficultyLevel = 4;
+                break;
+            case HARD:
+                lives = 2;
+                maxLives = 2;
+                timeLeft = 45;
+                bombProbability = 35;
+                speedIncreaseInterval = 8;
+                maxDifficultyLevel = 5;
+                break;
+        }
 
         try {
             background = ImageIO.read(getClass().getClassLoader().getResource("res/background.png"));
@@ -44,6 +84,9 @@ public class GamePanel extends JPanel implements ActionListener {
             timerImg   = ImageIO.read(getClass().getClassLoader().getResource("res/timer.png"));
             menuImg    = ImageIO.read(getClass().getClassLoader().getResource("res/menu.png"));
             heartImg   = ImageIO.read(getClass().getClassLoader().getResource("res/heart.png"));
+            powerupHeartImg = ImageIO.read(getClass().getClassLoader().getResource("res/heart.png"));
+            powerupClockImg = ImageIO.read(getClass().getClassLoader().getResource("res/clock.png"));
+            powerupStarImg  = ImageIO.read(getClass().getClassLoader().getResource("res/star.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -62,16 +105,25 @@ public class GamePanel extends JPanel implements ActionListener {
             holePositions[i] = new Rectangle(x, y, holeWidth, holeHeight);
         }
 
-        spawnTimer = new Timer(2000, this);
+        int spawnDelay = switch (difficulty) {
+            case EASY -> 3000;
+            case MEDIUM -> 2000;
+            case HARD -> 1500;
+        };
+        spawnTimer = new Timer(spawnDelay, this);
         spawnTimer.start();
 
         gameTimer = new Timer(1000, e -> {
-            timeLeft--;
-            if (timeLeft % 10 == 0 && difficulty < 4) {
-                difficulty++;
-                spawnTimer.setDelay(Math.max(800, spawnTimer.getDelay() - 100));
+            timeTick++;
+            boolean shouldDecrementTime = !slowMotionActive || (timeTick % 2 == 0);
+            if (shouldDecrementTime) {
+                timeLeft--;
+                if (timeLeft % speedIncreaseInterval == 0 && difficultyLevel < maxDifficultyLevel) {
+                    difficultyLevel++;
+                    spawnTimer.setDelay(Math.max(800, spawnTimer.getDelay() - 100));
+                }
+                if (timeLeft <= 0) gameOver();
             }
-            if (timeLeft <= 0) gameOver();
             repaint();
         });
         gameTimer.start();
@@ -88,6 +140,29 @@ public class GamePanel extends JPanel implements ActionListener {
         });
         animationTimer.start();
 
+        effectTimer = new Timer(1000, e -> {
+            if (slowMotionActive) {
+                slowMotionTimeLeft--;
+                if (slowMotionTimeLeft <= 0) {
+                    slowMotionActive = false;
+                    spawnTimer.setDelay(switch (gameDifficulty) {
+                        case EASY -> 3000;
+                        case MEDIUM -> 2000;
+                        case HARD -> 1500;
+                    });
+                }
+            }
+            if (doublePointsActive) {
+                doublePointsTimeLeft--;
+                if (doublePointsTimeLeft <= 0) {
+                    doublePointsActive = false;
+                    scoreMultiplier = 1;
+                }
+            }
+            repaint();
+        });
+        effectTimer.start();
+
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -101,6 +176,7 @@ public class GamePanel extends JPanel implements ActionListener {
                     if (spawnTimer != null) spawnTimer.stop();
                     if (gameTimer != null) gameTimer.stop();
                     if (animationTimer != null) animationTimer.stop();
+                    if (effectTimer != null) effectTimer.stop();
                     if (bgMusic != null) bgMusic.stop();
 
                     JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(GamePanel.this);
@@ -114,8 +190,33 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     // --------------------------
-    // SOUND METHODS
+// POWERUP METHODS
+// --------------------------
+    void applyPowerup(PowerupType type) {
+        switch (type) {
+            case EXTRA_LIFE:
+                lives++;
+                playSoundEffect("chime.wav");
+                break;
+            case SLOW_MOTION:
+                slowMotionActive = true;
+                slowMotionTimeLeft = 10;
+                timeTick = 0; // align the slow time
+                spawnTimer.setDelay(spawnTimer.getDelay() * 2); // double the delay
+                playSoundEffect("clock.wav");
+                break;
+            case DOUBLE_POINTS:
+                doublePointsActive = true;
+                doublePointsTimeLeft = 15;
+                scoreMultiplier = 2;
+                playSoundEffect("2x.wav");
+                break;
+        }
+    }
+
     // --------------------------
+// SOUND METHODS
+// --------------------------
     public void playMusic(String filename) {
         try {
             AudioInputStream audioStream = AudioSystem.getAudioInputStream(
@@ -151,7 +252,7 @@ public class GamePanel extends JPanel implements ActionListener {
                 obj.clicked = true;
 
                 if (obj.type.equals("pookie")) {
-                    score++;
+                    score += scoreMultiplier;
                     playSoundEffect("pop.wav");
                 } else if (obj.type.equals("bomb")) {
                     lives--;
@@ -160,6 +261,8 @@ public class GamePanel extends JPanel implements ActionListener {
                         gameOver();
                         return;
                     }
+                } else if (obj.type.equals("powerup")) {
+                    applyPowerup(obj.powerupType);
                 }
 
                 activeObjects.remove(i);
@@ -183,19 +286,31 @@ public class GamePanel extends JPanel implements ActionListener {
 
         for (PoppingObject obj : activeObjects) {
             if (obj.type.equals("pookie")) {
-                int pookieWidth = 130, pookieHeight = 130;
+                int pookieWidth = 120, pookieHeight = 120;
                 int pookieX = obj.rect.x + (obj.rect.width - pookieWidth) / 2;
                 int offsetY = (obj.animationFrame < 5) ? -obj.animationFrame * 3 : -15;
-                int pookieY = obj.rect.y - 40 + offsetY;
+                int pookieY = obj.rect.y + (obj.rect.height - pookieHeight) / 2 + offsetY;
 
                 g.drawImage(pookieImg, pookieX, pookieY, pookieWidth, pookieHeight, this);
             } else if (obj.type.equals("bomb")) {
-                int bombWidth = 130, bombHeight = 130;
+                int bombWidth = 120, bombHeight = 120;
                 int bombX = obj.rect.x + (obj.rect.width - bombWidth) / 2;
                 int offsetY = (obj.animationFrame < 5) ? -obj.animationFrame * 3 : -15;
-                int bombY = obj.rect.y - 40 + offsetY;
+                int bombY = obj.rect.y + (obj.rect.height - bombHeight) / 2 + offsetY;
 
                 g.drawImage(bombImg, bombX, bombY, bombWidth, bombHeight, this);
+            } else if (obj.type.equals("powerup")) {
+                BufferedImage img = switch (obj.powerupType) {
+                    case EXTRA_LIFE -> powerupHeartImg;
+                    case SLOW_MOTION -> powerupClockImg;
+                    case DOUBLE_POINTS -> powerupStarImg;
+                };
+                int pw = 60, ph = 60;
+                int px = obj.rect.x + (obj.rect.width - pw) / 2;
+                int offsetY = (obj.animationFrame < 5) ? -obj.animationFrame * 3 : -15;
+                int py = obj.rect.y + (obj.rect.height - ph) / 2 + offsetY;
+
+                g.drawImage(img, px, py, pw, ph, this);
             }
         }
 
@@ -216,6 +331,16 @@ public class GamePanel extends JPanel implements ActionListener {
         int menuX = SCREEN_WIDTH - menuSize - 10;
         int menuY = 5;
         g.drawImage(menuImg, menuX, menuY, menuSize, menuSize, this);
+
+        // Effect indicators
+        int effectY = 80;
+        if (slowMotionActive) {
+            g.drawString("Slow Motion: " + slowMotionTimeLeft + "s", 150, effectY);
+            effectY += 30;
+        }
+        if (doublePointsActive) {
+            g.drawString("Double Points: " + doublePointsTimeLeft + "s", 150, effectY);
+        }
     }
 
     // --------------------------
@@ -225,7 +350,7 @@ public class GamePanel extends JPanel implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         activeObjects.clear();
         HashSet<Integer> usedHoles = new HashSet<>();
-        for (int i = 0; i < difficulty; i++) {
+        for (int i = 0; i < difficultyLevel; i++) {
             int holeIndex;
             do {
                 holeIndex = random.nextInt(holePositions.length);
@@ -234,8 +359,20 @@ public class GamePanel extends JPanel implements ActionListener {
 
             Rectangle h = holePositions[holeIndex];
             Rectangle pRect = new Rectangle(h.x + 35, h.y - 100, 100, 100);
-                       String type = (random.nextInt(100) < 75) ? "pookie" : "bomb";
-            activeObjects.add(new PoppingObject(pRect, type));
+            int rand = random.nextInt(100);
+            PoppingObject obj;
+            if (rand < bombProbability) {
+                obj = new PoppingObject(pRect, "bomb");
+            } else if (rand < bombProbability + 4 && lives < maxLives) { // extra life 4%, only if not max
+                obj = new PoppingObject(pRect, PowerupType.EXTRA_LIFE);
+            } else if (rand < bombProbability + 4 + 3) { // slow motion 3%
+                obj = new PoppingObject(pRect, PowerupType.SLOW_MOTION);
+            } else if (rand < bombProbability + 4 + 3 + 3) { // double points 3%
+                obj = new PoppingObject(pRect, PowerupType.DOUBLE_POINTS);
+            } else {
+                obj = new PoppingObject(pRect, "pookie");
+            }
+            activeObjects.add(obj);
         }
 
         repaint();
@@ -251,6 +388,7 @@ public class GamePanel extends JPanel implements ActionListener {
         if (spawnTimer != null) spawnTimer.stop();
         if (gameTimer != null) gameTimer.stop();
         if (animationTimer != null) animationTimer.stop();
+        if (effectTimer != null) effectTimer.stop();
         if (bgMusic != null) bgMusic.stop();
 
         // 🏆 Check for new high score
@@ -283,15 +421,36 @@ public class GamePanel extends JPanel implements ActionListener {
         if (choice == JOptionPane.YES_OPTION) {
             // Reset game state
             score = 0;
-            lives = 3;
-            timeLeft = 60;
-            difficulty = 1;
+            lives = maxLives;
+            switch (gameDifficulty) {
+                case EASY:
+                    timeLeft = 90;
+                    break;
+                case MEDIUM:
+                    timeLeft = 60;
+                    break;
+                case HARD:
+                    timeLeft = 45;
+                    break;
+            }
+            difficultyLevel = 1;
+            timeTick = 0;
             activeObjects.clear();
 
-            spawnTimer.setDelay(2000); // reset spawn speed
+            int spawnDelay = switch (gameDifficulty) {
+                case EASY -> 3000;
+                case MEDIUM -> 2000;
+                case HARD -> 1500;
+            };
+            spawnTimer.setDelay(spawnDelay); // reset spawn speed
             spawnTimer.start();
             gameTimer.start();
             animationTimer.start();
+            effectTimer.start();
+            // reset effects
+            slowMotionActive = false;
+            doublePointsActive = false;
+            scoreMultiplier = 1;
 
             // restart background music
             if (bgMusic != null) {
@@ -342,17 +501,25 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     // --------------------------
-    // OBJECT CLASS
-    // --------------------------
+// OBJECT CLASS
+// --------------------------
     class PoppingObject {
         Rectangle rect;
         String type;
+        PowerupType powerupType;
         int animationFrame = 0;
         boolean clicked = false; // ✅ prevents mass scoring
 
         public PoppingObject(Rectangle r, String t) {
             rect = r;
             type = t;
+            powerupType = null;
+        }
+
+        public PoppingObject(Rectangle r, PowerupType pt) {
+            rect = r;
+            type = "powerup";
+            powerupType = pt;
         }
     }
 }

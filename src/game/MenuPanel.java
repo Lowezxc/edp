@@ -57,31 +57,14 @@ public class MenuPanel extends JPanel {
         if (gp.animationTimer != null) gp.animationTimer.stop();
     }
 
-    // Start a fresh game
-    frame.setContentPane(new GamePanel());
+    // Go to difficulty selection
+    frame.setContentPane(new DifficultyPanel(frame));
     frame.revalidate();
 });
 
         howToPlayButton.addActionListener(e -> {
-            UIManager.put("OptionPane.background", new Color(255, 228, 240));
-            UIManager.put("Panel.background", new Color(255, 228, 240));
-            UIManager.put("OptionPane.messageForeground", new Color(120, 40, 80));
-            UIManager.put("Button.background", new Color(255, 182, 193));
-            UIManager.put("Button.foreground", Color.WHITE);
-            UIManager.put("Button.font", new Font("Serif", Font.BOLD, 16));
-            UIManager.put("OptionPane.font", new Font("Serif", Font.BOLD, 18));
-
-            JOptionPane.showMessageDialog(
-                this,
-                "How to Play:\n\n" +
-                "- Click on the cute pookies to pop them and score points!\n" +
-                "- Avoid clicking on the bombs, or you'll lose a life.\n" +
-                "- You have 3 lives and 60 seconds to get the highest score.\n" +
-                "- The game gets faster as time goes on.\n\n" +
-                "Good luck! 🎀",
-                "Peek-A-Pookie Instructions ✨",
-                JOptionPane.INFORMATION_MESSAGE
-            );
+            frame.setContentPane(new InstructionsPanel(frame));
+            frame.revalidate();
         });
 
     }
