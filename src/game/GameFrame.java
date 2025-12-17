@@ -5,7 +5,9 @@ import javax.swing.JFrame;
 public class GameFrame extends JFrame {
 
     public GameFrame() {
-        this.add(new GamePanel());
+        // Start with the menu instead of the game
+        this.setContentPane(new MenuPanel(this));
+
         this.setTitle("Peek-A-Pookie");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setResizable(false);

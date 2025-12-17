@@ -18,62 +18,62 @@
 		<link>
 			<name>images/background.png</name>
 			<type>1</type>
-			<location>C:/Users/John/Documents/edp game/background.png</location>
+			<location>C:/Users/David/desktop/edp/images/background.png</location>
 		</link>
 		<link>
 			<name>images/heart.png</name>
 			<type>1</type>
-			<location>C:/Users/John/Documents/edp game/heart.png</location>
+			<location>C:/Users/David/desktop/edp/images/heart.png</location>
 		</link>
 		<link>
 			<name>images/hole.png</name>
 			<type>1</type>
-			<location>C:/Users/John/Documents/edp game/hole.png</location>
+			<location>C:/Users/David/desktop/edp/images/hole.png</location>
 		</link>
 		<link>
 			<name>images/pookie.png</name>
 			<type>1</type>
-			<location>C:/Users/John/Documents/edp game/pookie.png</location>
+			<location>C:/Users/David/desktop/edp/images/pookie.png</location>
 		</link>
 		<link>
 			<name>images/timer.png</name>
 			<type>1</type>
-			<location>C:/Users/John/Documents/edp game/timer.png</location>
+			<location>C:/Users/David/desktop/edp/images/timer.png</location>
 		</link>
 		<link>
 			<name>src/background.png</name>
 			<type>1</type>
-			<location>C:/Users/John/Documents/edp game/background.png</location>
+			<location>C:/Users/David/desktop/edp/images/background.png</location>
 		</link>
 		<link>
 			<name>src/bomb.png</name>
 			<type>1</type>
-			<location>C:/Users/John/Documents/edp game/bomb.png</location>
+			<location>C:/Users/David/desktop/edp/images/bomb.png</location>
 		</link>
 		<link>
 			<name>src/heart.png</name>
 			<type>1</type>
-			<location>C:/Users/John/Documents/edp game/heart.png</location>
+			<location>C:/Users/David/desktop/edp/images/heart.png</location>
 		</link>
 		<link>
 			<name>src/hole.png</name>
 			<type>1</type>
-			<location>C:/Users/John/Documents/edp game/hole.png</location>
+			<location>C:/Users/David/desktop/edp/images/hole.png</location>
 		</link>
 		<link>
 			<name>src/menu.png</name>
 			<type>1</type>
-			<location>C:/Users/John/Documents/edp game/menu.png</location>
+			<location>C:/Users/David/desktop/edp/images/menu.png</location>
 		</link>
 		<link>
 			<name>src/pookie.png</name>
 			<type>1</type>
-			<location>C:/Users/John/Documents/edp game/pookie.png</location>
+			<location>C:/Users/David/desktop/edp/images/pookie.png</location>
 		</link>
 		<link>
 			<name>src/timer.png</name>
 			<type>1</type>
-			<location>C:/Users/John/Documents/edp game/timer.png</location>
+			<location>C:/Users/David/desktop/edp/images/timer.png</location>
 		</link>
 	</linkedResources>
 	<filteredResources>
