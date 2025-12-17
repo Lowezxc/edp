@@ -16,7 +16,7 @@ public class GamePanel extends JPanel implements ActionListener {
     static final int SCREEN_WIDTH = 1280;
     static final int SCREEN_HEIGHT = 720;
 
-    BufferedImage background, holeImg, pookieImg, bombImg, timerImg, menuImg, heartImg, powerupHeartImg, powerupClockImg, powerupStarImg;
+    BufferedImage background, holeImg, holeBottomImg, pookieImg, bombImg, timerImg, menuImg, heartImg, powerupHeartImg, powerupClockImg, powerupStarImg;
 
     Difficulty gameDifficulty;
     int score = 0;
@@ -79,6 +79,7 @@ public class GamePanel extends JPanel implements ActionListener {
         try {
             background = ImageIO.read(getClass().getClassLoader().getResource("res/background.png"));
             holeImg    = ImageIO.read(getClass().getClassLoader().getResource("res/hole.png"));
+            holeBottomImg = ImageIO.read(getClass().getClassLoader().getResource("res/holebottom.png"));
             pookieImg  = ImageIO.read(getClass().getClassLoader().getResource("res/pookie.png"));
             bombImg    = ImageIO.read(getClass().getClassLoader().getResource("res/bomb.png")); // pookie-with-bomb
             timerImg   = ImageIO.read(getClass().getClassLoader().getResource("res/timer.png"));
@@ -288,14 +289,14 @@ public class GamePanel extends JPanel implements ActionListener {
             if (obj.type.equals("pookie")) {
                 int pookieWidth = 120, pookieHeight = 120;
                 int pookieX = obj.rect.x + (obj.rect.width - pookieWidth) / 2;
-                int offsetY = (obj.animationFrame < 5) ? -obj.animationFrame * 3 : -15;
+                int offsetY = (obj.animationFrame < 5) ? -obj.animationFrame * 5 : -25;
                 int pookieY = obj.rect.y + (obj.rect.height - pookieHeight) / 2 + offsetY;
 
                 g.drawImage(pookieImg, pookieX, pookieY, pookieWidth, pookieHeight, this);
             } else if (obj.type.equals("bomb")) {
                 int bombWidth = 120, bombHeight = 120;
                 int bombX = obj.rect.x + (obj.rect.width - bombWidth) / 2;
-                int offsetY = (obj.animationFrame < 5) ? -obj.animationFrame * 3 : -15;
+                int offsetY = (obj.animationFrame < 5) ? -obj.animationFrame * 5 : -25;
                 int bombY = obj.rect.y + (obj.rect.height - bombHeight) / 2 + offsetY;
 
                 g.drawImage(bombImg, bombX, bombY, bombWidth, bombHeight, this);
@@ -307,11 +308,14 @@ public class GamePanel extends JPanel implements ActionListener {
                 };
                 int pw = 60, ph = 60;
                 int px = obj.rect.x + (obj.rect.width - pw) / 2;
-                int offsetY = (obj.animationFrame < 5) ? -obj.animationFrame * 3 : -15;
+                int offsetY = (obj.animationFrame < 5) ? -obj.animationFrame * 5 : -25;
                 int py = obj.rect.y + (obj.rect.height - ph) / 2 + offsetY;
 
                 g.drawImage(img, px, py, pw, ph, this);
             }
+
+            // Draw bottom of hole on top of the object, sized like the full hole
+            g.drawImage(holeBottomImg, obj.rect.x - 25, obj.rect.y - 10, 150, 120, this);
         }
 
         for (int i = 0; i < lives; i++) {
@@ -358,7 +362,7 @@ public class GamePanel extends JPanel implements ActionListener {
             usedHoles.add(holeIndex);
 
             Rectangle h = holePositions[holeIndex];
-            Rectangle pRect = new Rectangle(h.x + 35, h.y - 100, 100, 100);
+            Rectangle pRect = new Rectangle(h.x + 25, h.y + 10, 100, 100);
             int rand = random.nextInt(100);
             PoppingObject obj;
             if (rand < bombProbability) {
