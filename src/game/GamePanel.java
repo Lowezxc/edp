@@ -20,6 +20,7 @@ public class GamePanel extends JPanel implements ActionListener {
     BufferedImage background, holeImg, holeBottomImg, pookieImg, bombImg, timerImg, menuImg, heartImg, powerupHeartImg, powerupClockImg, powerupStarImg;
 
     Difficulty gameDifficulty;
+    Mission mission;
     int score = 0;
     int lives;
     int timeLeft;
@@ -39,6 +40,7 @@ public class GamePanel extends JPanel implements ActionListener {
     boolean doublePointsActive = false;
     int doublePointsTimeLeft = 0;
     int timeTick = 0;
+    int bombsClicked = 0;
 
     Rectangle[] holePositions;
     ArrayList<PoppingObject> activeObjects = new ArrayList<>();
@@ -48,7 +50,12 @@ public class GamePanel extends JPanel implements ActionListener {
     Clip bgMusic;
 
     public GamePanel(Difficulty difficulty) {
+        this(difficulty, null);
+    }
+
+    public GamePanel(Difficulty difficulty, Mission mission) {
         this.gameDifficulty = difficulty;
+        this.mission = mission;
         this.setPreferredSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
         this.setFocusable(true);
         this.setOpaque(false);
@@ -59,10 +66,10 @@ public class GamePanel extends JPanel implements ActionListener {
                 lives = 5;
                 maxLives = 5;
                 timeLeft = 90;
-                bombProbability = 10;
+                bombProbability = 25;
                 speedIncreaseInterval = 15;
                 maxDifficultyLevel = 3;
-                baseDelay = 3000;
+                baseDelay = 1000;
                 variation = 2000;
                 maxLifeTime = 3000;
                 break;
@@ -70,10 +77,10 @@ public class GamePanel extends JPanel implements ActionListener {
                 lives = 3;
                 maxLives = 3;
                 timeLeft = 60;
-                bombProbability = 25;
+                bombProbability = 30;
                 speedIncreaseInterval = 10;
                 maxDifficultyLevel = 4;
-                baseDelay = 1500;
+                baseDelay = 900;
                 variation = 1000;
                 maxLifeTime = 2000;
                 break;
@@ -88,6 +95,13 @@ public class GamePanel extends JPanel implements ActionListener {
                 variation = 600;
                 maxLifeTime = 1500;
                 break;
+        }
+        if (mission != null) {
+            timeLeft = mission.timeLimit;
+            if (mission.type == Mission.MissionType.NO_BOMBS) {
+                lives = 1;
+                maxLives = 1;
+            }
         }
         originalBaseDelay = baseDelay;
 
@@ -164,7 +178,6 @@ public class GamePanel extends JPanel implements ActionListener {
                 slowMotionTimeLeft--;
                 if (slowMotionTimeLeft <= 0) {
                     slowMotionActive = false;
-                    baseDelay = originalBaseDelay;
                 }
             }
             if (doublePointsActive) {
@@ -231,7 +244,6 @@ public class GamePanel extends JPanel implements ActionListener {
                 slowMotionActive = true;
                 slowMotionTimeLeft = 10;
                 timeTick = 0; // align the slow time
-                baseDelay = originalBaseDelay * 2; // double the base delay
                 playSoundEffect("clock.wav");
                 break;
             case DOUBLE_POINTS:
@@ -283,8 +295,13 @@ public class GamePanel extends JPanel implements ActionListener {
                 if (obj.type.equals("pookie")) {
                     score += scoreMultiplier;
                     playSoundEffect("pop.wav");
+                    if (mission != null && mission.type == Mission.MissionType.SCORE && score >= mission.targetValue) {
+                        gameOver();
+                        return;
+                    }
                 } else if (obj.type.equals("bomb")) {
                     lives--;
+                    bombsClicked++;
                     playSoundEffect("explosion.wav");
                     if (lives <= 0) {
                         gameOver();
@@ -437,6 +454,20 @@ public class GamePanel extends JPanel implements ActionListener {
             showCelebrationDialog("Score: " + score);
         }
 
+        // Check mission completion
+        boolean missionCompleted = false;
+        if (mission != null) {
+            switch (mission.type) {
+                case SCORE -> missionCompleted = score >= mission.targetValue;
+                case SURVIVAL -> missionCompleted = timeLeft <= 0 && lives > 0;
+                case NO_BOMBS -> missionCompleted = bombsClicked == 0;
+            }
+            if (missionCompleted) {
+                playSoundEffect("yay.wav");
+                showCelebrationDialog("Mission Completed!\n" + mission.description + "\nScore: " + score);
+            }
+        }
+
         UIManager.put("OptionPane.background", new Color(255, 228, 240));
         UIManager.put("Panel.background", new Color(255, 228, 240));
         UIManager.put("OptionPane.messageForeground", new Color(120, 40, 80));
@@ -459,21 +490,26 @@ public class GamePanel extends JPanel implements ActionListener {
             // Reset game state
             score = 0;
             lives = maxLives;
-            switch (gameDifficulty) {
-                case EASY:
-                    timeLeft = 90;
-                    break;
-                case MEDIUM:
-                    timeLeft = 60;
-                    break;
-                case HARD:
-                    timeLeft = 45;
-                    break;
+            if (mission != null) {
+                timeLeft = mission.timeLimit;
+            } else {
+                switch (gameDifficulty) {
+                    case EASY:
+                        timeLeft = 90;
+                        break;
+                    case MEDIUM:
+                        timeLeft = 60;
+                        break;
+                    case HARD:
+                        timeLeft = 45;
+                        break;
+                }
             }
             difficultyLevel = 1;
             timeTick = 0;
             activeObjects.clear();
             baseDelay = originalBaseDelay; // reset spawn speed
+            bombsClicked = 0; // reset bomb clicks
             spawnTimer.start();
             gameTimer.start();
             animationTimer.start();

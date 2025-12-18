@@ -49,6 +49,16 @@ public class MenuPanel extends JPanel {
         });
         this.add(howToPlayButton);
 
+        // Challenges button
+        RoundedButton challengesButton = new RoundedButton("Challenges");
+        challengesButton.setFont(new Font("Serif", Font.PLAIN, 36));
+        challengesButton.setBounds(GamePanel.SCREEN_WIDTH/2 - 150, 620, 300, 60);
+        challengesButton.addActionListener(e -> {
+            frame.setContentPane(new ChallengePanel(frame));
+            frame.revalidate();
+        });
+        this.add(challengesButton);
+
     }
 
     @Override
