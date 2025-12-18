@@ -14,9 +14,9 @@ public class DifficultyPanel extends JPanel {
         this.setPreferredSize(new Dimension(GamePanel.SCREEN_WIDTH, GamePanel.SCREEN_HEIGHT));
         this.setLayout(null);
 
-        // Load background image
+        // Load background images
         try {
-            background = ImageIO.read(getClass().getClassLoader().getResource("res/background.png"));
+            background = ImageIO.read(getClass().getClassLoader().getResource("res/bg.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }

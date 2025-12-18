@@ -77,7 +77,7 @@ public class GamePanel extends JPanel implements ActionListener {
         }
 
         try {
-            background = ImageIO.read(getClass().getClassLoader().getResource("res/background.png"));
+            background = ImageIO.read(getClass().getClassLoader().getResource("res/bg2.png"));
             holeImg    = ImageIO.read(getClass().getClassLoader().getResource("res/hole.png"));
             holeBottomImg = ImageIO.read(getClass().getClassLoader().getResource("res/holebottom.png"));
             pookieImg  = ImageIO.read(getClass().getClassLoader().getResource("res/pookie.png"));
@@ -324,7 +324,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
         g.setColor(Color.BLACK);
         g.setFont(new Font("Arial", Font.BOLD, 24));
-        g.drawString("Score: " + score, 150, 45);
+        g.drawString("Score: " + score, 20, 70);
 
         int topRightX = SCREEN_WIDTH - 200;
         int iconSize = 40;

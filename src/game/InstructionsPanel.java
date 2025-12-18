@@ -14,18 +14,13 @@ public class InstructionsPanel extends JPanel {
         this.setPreferredSize(new Dimension(GamePanel.SCREEN_WIDTH, GamePanel.SCREEN_HEIGHT));
         this.setLayout(null);
 
-        // Load background image
+        // Load background images
         try {
-            background = ImageIO.read(getClass().getClassLoader().getResource("res/background.png"));
+            background = ImageIO.read(getClass().getClassLoader().getResource("res/bg.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        // Title
-        RoundedButton titleButton = new RoundedButton("How to Play");
-        titleButton.setBounds(GamePanel.SCREEN_WIDTH/2 - 150, 40, 300, 60);
-        titleButton.setFont(new Font("Serif", Font.BOLD, 36));
-        this.add(titleButton);
 
         // Instructions panel
         JPanel instructionsPanel = new JPanel();
@@ -34,7 +29,7 @@ public class InstructionsPanel extends JPanel {
         instructionsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         JScrollPane scrollPane = new JScrollPane(instructionsPanel);
-        scrollPane.setBounds(200, 150, 880, 400);
+        scrollPane.setBounds(200, 100, 880, 450);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
@@ -176,6 +171,7 @@ public class InstructionsPanel extends JPanel {
         fun.setForeground(new Color(120, 40, 80));
         fun.setAlignmentX(Component.CENTER_ALIGNMENT);
         instructionsPanel.add(fun);
+        instructionsPanel.add(Box.createVerticalStrut(50));
 
         this.add(scrollPane);
 
@@ -197,5 +193,20 @@ public class InstructionsPanel extends JPanel {
         if (background != null) {
             g.drawImage(background, 0, 0, GamePanel.SCREEN_WIDTH, GamePanel.SCREEN_HEIGHT, this);
         }
+
+        // Draw title
+        g.setFont(new Font("SansSerif", Font.BOLD, 36));
+        FontMetrics fm = g.getFontMetrics();
+        int titleWidth = fm.stringWidth("How to Play");
+        int titleX = (GamePanel.SCREEN_WIDTH - titleWidth) / 2;
+        int titleY = 70;
+
+        // Shadow
+        g.setColor(new Color(80, 20, 60));
+        g.drawString("How to Play", titleX + 1, titleY + 1);
+
+        // Main text
+        g.setColor(new Color(120, 40, 80));
+        g.drawString("How to Play", titleX, titleY);
     }
 }

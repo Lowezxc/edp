@@ -14,58 +14,40 @@ public class MenuPanel extends JPanel {
         this.setPreferredSize(new Dimension(GamePanel.SCREEN_WIDTH, GamePanel.SCREEN_HEIGHT));
         this.setLayout(null);
 
-        // Load background image
+        // Load background images
         try {
-            background = ImageIO.read(getClass().getClassLoader().getResource("res/background.png"));
+            background = ImageIO.read(getClass().getClassLoader().getResource("res/bg.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        // Title styled as rounded oblong with ribbons
-        RoundedButton titleButton = new RoundedButton("Peek-A-Pookie");
-        titleButton.setBounds(GamePanel.SCREEN_WIDTH/2 - 200, 40, 400, 80); // uppermost center
-        titleButton.setFont(new Font("Serif", Font.BOLD, 36));
-        this.add(titleButton);
 
-        JLabel leftRibbon = new JLabel("🎀");
-        leftRibbon.setFont(new Font("Serif", Font.PLAIN, 36));
-        leftRibbon.setBounds(titleButton.getX() - 50, titleButton.getY(), 50, 80);
-        this.add(leftRibbon);
-
-        JLabel rightRibbon = new JLabel("🎀");
-        rightRibbon.setFont(new Font("Serif", Font.PLAIN, 36));
-        rightRibbon.setBounds(titleButton.getX() + titleButton.getWidth(), titleButton.getY(), 50, 80);
-        this.add(rightRibbon);
-
-        // Start Game button styled as rounded oblong, placed lower (under tree)
+        // Start Game button
         RoundedButton startButton = new RoundedButton("Start Game");
-        startButton.setBounds(GamePanel.SCREEN_WIDTH/2 - 150, 580, 300, 60); // centered lower
-        startButton.setFont(new Font("Serif", Font.BOLD, 28));
+        startButton.setFont(new Font("Serif", Font.PLAIN, 36));
+        startButton.setBounds(GamePanel.SCREEN_WIDTH/2 - 150, 480, 300, 60);
+        startButton.addActionListener(e -> {
+            // Stop any running timers from the old GamePanel
+            if (frame.getContentPane() instanceof GamePanel gp) {
+                if (gp.spawnTimer != null) gp.spawnTimer.stop();
+                if (gp.gameTimer != null) gp.gameTimer.stop();
+                if (gp.animationTimer != null) gp.animationTimer.stop();
+            }
+            // Go to difficulty selection
+            frame.setContentPane(new DifficultyPanel(frame));
+            frame.revalidate();
+        });
         this.add(startButton);
 
         // How to Play button
         RoundedButton howToPlayButton = new RoundedButton("How to Play");
-        howToPlayButton.setBounds(GamePanel.SCREEN_WIDTH/2 - 150, 650, 300, 60);
-        howToPlayButton.setFont(new Font("Serif", Font.BOLD, 28));
-        this.add(howToPlayButton);
-
-       startButton.addActionListener(e -> {
-    // Stop any running timers from the old GamePanel
-    if (frame.getContentPane() instanceof GamePanel gp) {
-        if (gp.spawnTimer != null) gp.spawnTimer.stop();
-        if (gp.gameTimer != null) gp.gameTimer.stop();
-        if (gp.animationTimer != null) gp.animationTimer.stop();
-    }
-
-    // Go to difficulty selection
-    frame.setContentPane(new DifficultyPanel(frame));
-    frame.revalidate();
-});
-
+        howToPlayButton.setFont(new Font("Serif", Font.PLAIN, 36));
+        howToPlayButton.setBounds(GamePanel.SCREEN_WIDTH/2 - 150, 550, 300, 60);
         howToPlayButton.addActionListener(e -> {
             frame.setContentPane(new InstructionsPanel(frame));
             frame.revalidate();
         });
+        this.add(howToPlayButton);
 
     }
 
@@ -75,5 +57,25 @@ public class MenuPanel extends JPanel {
         if (background != null) {
             g.drawImage(background, 0, 0, GamePanel.SCREEN_WIDTH, GamePanel.SCREEN_HEIGHT, this);
         }
+
+        // Draw title with shadow
+        g.setFont(new Font("SansSerif", Font.BOLD, 36));
+        FontMetrics fm = g.getFontMetrics();
+        int titleWidth = fm.stringWidth("Peek-A-Pookie");
+        int titleX = (GamePanel.SCREEN_WIDTH - titleWidth) / 2;
+        int titleY = 80;
+
+        // Shadow
+        g.setColor(new Color(80, 20, 60));
+        g.drawString("Peek-A-Pookie", titleX + 1, titleY + 1);
+
+        // Main text
+        g.setColor(new Color(120, 40, 80));
+        g.drawString("Peek-A-Pookie", titleX, titleY);
+
+        // Ribbons
+        g.setFont(new Font("Serif", Font.PLAIN, 36));
+        g.drawString("🎀", titleX - 50, titleY);
+        g.drawString("🎀", titleX + titleWidth + 10, titleY);
     }
 }

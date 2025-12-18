@@ -42,6 +42,11 @@ public class RoundedButton extends JButton {
             g2.drawString(lines[i], textX, textY);
         }
 
+        // Darker outline
+        g2.setStroke(new BasicStroke(2));
+        g2.setColor(new Color(120, 40, 80));
+        g2.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 40, 40);
+
         g2.dispose();
     }
 }
