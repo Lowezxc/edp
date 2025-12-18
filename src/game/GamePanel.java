@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
@@ -28,6 +29,10 @@ public class GamePanel extends JPanel implements ActionListener {
     int speedIncreaseInterval; // seconds
     int maxDifficultyLevel;
     int maxLives;
+    int baseDelay;
+    int variation;
+    int originalBaseDelay;
+    int maxLifeTime;
     int scoreMultiplier = 1;
     boolean slowMotionActive = false;
     int slowMotionTimeLeft = 0;
@@ -57,6 +62,9 @@ public class GamePanel extends JPanel implements ActionListener {
                 bombProbability = 10;
                 speedIncreaseInterval = 15;
                 maxDifficultyLevel = 3;
+                baseDelay = 3000;
+                variation = 2000;
+                maxLifeTime = 3000;
                 break;
             case MEDIUM:
                 lives = 3;
@@ -65,6 +73,9 @@ public class GamePanel extends JPanel implements ActionListener {
                 bombProbability = 25;
                 speedIncreaseInterval = 10;
                 maxDifficultyLevel = 4;
+                baseDelay = 1500;
+                variation = 1000;
+                maxLifeTime = 2000;
                 break;
             case HARD:
                 lives = 2;
@@ -73,8 +84,12 @@ public class GamePanel extends JPanel implements ActionListener {
                 bombProbability = 35;
                 speedIncreaseInterval = 8;
                 maxDifficultyLevel = 5;
+                baseDelay = 800;
+                variation = 600;
+                maxLifeTime = 1500;
                 break;
         }
+        originalBaseDelay = baseDelay;
 
         try {
             background = ImageIO.read(getClass().getClassLoader().getResource("res/bg2.png"));
@@ -106,12 +121,7 @@ public class GamePanel extends JPanel implements ActionListener {
             holePositions[i] = new Rectangle(x, y, holeWidth, holeHeight);
         }
 
-        int spawnDelay = switch (difficulty) {
-            case EASY -> 3000;
-            case MEDIUM -> 2000;
-            case HARD -> 1500;
-        };
-        spawnTimer = new Timer(spawnDelay, this);
+        spawnTimer = new Timer(calculateRandomDelay(), this);
         spawnTimer.start();
 
         gameTimer = new Timer(1000, e -> {
@@ -121,7 +131,7 @@ public class GamePanel extends JPanel implements ActionListener {
                 timeLeft--;
                 if (timeLeft % speedIncreaseInterval == 0 && difficultyLevel < maxDifficultyLevel) {
                     difficultyLevel++;
-                    spawnTimer.setDelay(Math.max(800, spawnTimer.getDelay() - 100));
+                    baseDelay = Math.max(400, baseDelay - 200);
                 }
                 if (timeLeft <= 0) gameOver();
             }
@@ -131,9 +141,17 @@ public class GamePanel extends JPanel implements ActionListener {
 
         animationTimer = new Timer(100, e -> {
             boolean needRepaint = false;
-            for (PoppingObject obj : activeObjects) {
+            for (int i = activeObjects.size() - 1; i >= 0; i--) {
+                PoppingObject obj = activeObjects.get(i);
+                if (!obj.clicked && !obj.despawning && System.currentTimeMillis() - obj.spawnTime > maxLifeTime) {
+                    obj.despawning = true;
+                    obj.animationFrame = 0; // reset for despawn animation
+                }
                 if (obj.animationFrame < 10) {
                     obj.animationFrame++;
+                    needRepaint = true;
+                } else if (obj.despawning) {
+                    activeObjects.remove(i); // remove after despawn animation
                     needRepaint = true;
                 }
             }
@@ -146,11 +164,7 @@ public class GamePanel extends JPanel implements ActionListener {
                 slowMotionTimeLeft--;
                 if (slowMotionTimeLeft <= 0) {
                     slowMotionActive = false;
-                    spawnTimer.setDelay(switch (gameDifficulty) {
-                        case EASY -> 3000;
-                        case MEDIUM -> 2000;
-                        case HARD -> 1500;
-                    });
+                    baseDelay = originalBaseDelay;
                 }
             }
             if (doublePointsActive) {
@@ -190,9 +204,23 @@ public class GamePanel extends JPanel implements ActionListener {
         });
     }
 
+    private int calculateRandomDelay() {
+        return baseDelay + random.nextInt(variation);
+    }
+
+    private boolean isHoleOccupied(int index) {
+        Rectangle hole = holePositions[index];
+        for (PoppingObject obj : activeObjects) {
+            if (obj.rect.x == hole.x + 25 && !obj.clicked && !obj.despawning) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // --------------------------
-// POWERUP METHODS
-// --------------------------
+    // POWERUP METHODS
+    // --------------------------
     void applyPowerup(PowerupType type) {
         switch (type) {
             case EXTRA_LIFE:
@@ -203,7 +231,7 @@ public class GamePanel extends JPanel implements ActionListener {
                 slowMotionActive = true;
                 slowMotionTimeLeft = 10;
                 timeTick = 0; // align the slow time
-                spawnTimer.setDelay(spawnTimer.getDelay() * 2); // double the delay
+                baseDelay = originalBaseDelay * 2; // double the base delay
                 playSoundEffect("clock.wav");
                 break;
             case DOUBLE_POINTS:
@@ -249,7 +277,7 @@ public class GamePanel extends JPanel implements ActionListener {
     void checkClick(Point p) {
         for (int i = 0; i < activeObjects.size(); i++) {
             PoppingObject obj = activeObjects.get(i);
-            if (obj.rect.contains(p) && !obj.clicked) {
+            if (obj.rect.contains(p) && !obj.clicked && !obj.despawning) {
                 obj.clicked = true;
 
                 if (obj.type.equals("pookie")) {
@@ -286,17 +314,22 @@ public class GamePanel extends JPanel implements ActionListener {
         }
 
         for (PoppingObject obj : activeObjects) {
+            int offsetY;
+            if (!obj.despawning) {
+                offsetY = (obj.animationFrame < 5) ? -obj.animationFrame * 5 : -25;
+            } else {
+                offsetY = (obj.animationFrame < 5) ? obj.animationFrame * 5 : 25;
+            }
+
             if (obj.type.equals("pookie")) {
                 int pookieWidth = 120, pookieHeight = 120;
                 int pookieX = obj.rect.x + (obj.rect.width - pookieWidth) / 2;
-                int offsetY = (obj.animationFrame < 5) ? -obj.animationFrame * 5 : -25;
                 int pookieY = obj.rect.y + (obj.rect.height - pookieHeight) / 2 + offsetY;
 
                 g.drawImage(pookieImg, pookieX, pookieY, pookieWidth, pookieHeight, this);
             } else if (obj.type.equals("bomb")) {
                 int bombWidth = 120, bombHeight = 120;
                 int bombX = obj.rect.x + (obj.rect.width - bombWidth) / 2;
-                int offsetY = (obj.animationFrame < 5) ? -obj.animationFrame * 5 : -25;
                 int bombY = obj.rect.y + (obj.rect.height - bombHeight) / 2 + offsetY;
 
                 g.drawImage(bombImg, bombX, bombY, bombWidth, bombHeight, this);
@@ -308,7 +341,6 @@ public class GamePanel extends JPanel implements ActionListener {
                 };
                 int pw = 60, ph = 60;
                 int px = obj.rect.x + (obj.rect.width - pw) / 2;
-                int offsetY = (obj.animationFrame < 5) ? -obj.animationFrame * 5 : -25;
                 int py = obj.rect.y + (obj.rect.height - ph) / 2 + offsetY;
 
                 g.drawImage(img, px, py, pw, ph, this);
@@ -352,32 +384,33 @@ public class GamePanel extends JPanel implements ActionListener {
     // --------------------------
     @Override
     public void actionPerformed(ActionEvent e) {
-        activeObjects.clear();
-        HashSet<Integer> usedHoles = new HashSet<>();
-        for (int i = 0; i < difficultyLevel; i++) {
-            int holeIndex;
-            do {
-                holeIndex = random.nextInt(holePositions.length);
-            } while (usedHoles.contains(holeIndex));
-            usedHoles.add(holeIndex);
-
-            Rectangle h = holePositions[holeIndex];
-            Rectangle pRect = new Rectangle(h.x + 25, h.y + 10, 100, 100);
-            int rand = random.nextInt(100);
-            PoppingObject obj;
-            if (rand < bombProbability) {
-                obj = new PoppingObject(pRect, "bomb");
-            } else if (rand < bombProbability + 4 && lives < maxLives) { // extra life 4%, only if not max
-                obj = new PoppingObject(pRect, PowerupType.EXTRA_LIFE);
-            } else if (rand < bombProbability + 4 + 3) { // slow motion 3%
-                obj = new PoppingObject(pRect, PowerupType.SLOW_MOTION);
-            } else if (rand < bombProbability + 4 + 3 + 3) { // double points 3%
-                obj = new PoppingObject(pRect, PowerupType.DOUBLE_POINTS);
-            } else {
-                obj = new PoppingObject(pRect, "pookie");
-            }
-            activeObjects.add(obj);
+        // Spawn one random object on a random free hole
+        List<Integer> freeHoles = new ArrayList<>();
+        for (int i = 0; i < holePositions.length; i++) {
+            if (!isHoleOccupied(i)) freeHoles.add(i);
         }
+        if (freeHoles.isEmpty()) return; // no free hole, skip spawning
+        int randomIndex = random.nextInt(freeHoles.size());
+        int holeIndex = freeHoles.get(randomIndex);
+        Rectangle h = holePositions[holeIndex];
+        Rectangle pRect = new Rectangle(h.x + 25, h.y + 10, 100, 100);
+        int rand = random.nextInt(100);
+        PoppingObject obj;
+        if (rand < bombProbability) {
+            obj = new PoppingObject(pRect, "bomb");
+        } else if (rand < bombProbability + 4 && lives < maxLives) { // extra life 4%, only if not max
+            obj = new PoppingObject(pRect, PowerupType.EXTRA_LIFE);
+        } else if (rand < bombProbability + 4 + 3) { // slow motion 3%
+            obj = new PoppingObject(pRect, PowerupType.SLOW_MOTION);
+        } else if (rand < bombProbability + 4 + 3 + 3) { // double points 3%
+            obj = new PoppingObject(pRect, PowerupType.DOUBLE_POINTS);
+        } else {
+            obj = new PoppingObject(pRect, "pookie");
+        }
+        activeObjects.add(obj);
+
+        // Set next random delay
+        spawnTimer.setDelay(calculateRandomDelay());
 
         repaint();
     }
@@ -440,13 +473,7 @@ public class GamePanel extends JPanel implements ActionListener {
             difficultyLevel = 1;
             timeTick = 0;
             activeObjects.clear();
-
-            int spawnDelay = switch (gameDifficulty) {
-                case EASY -> 3000;
-                case MEDIUM -> 2000;
-                case HARD -> 1500;
-            };
-            spawnTimer.setDelay(spawnDelay); // reset spawn speed
+            baseDelay = originalBaseDelay; // reset spawn speed
             spawnTimer.start();
             gameTimer.start();
             animationTimer.start();
@@ -513,17 +540,21 @@ public class GamePanel extends JPanel implements ActionListener {
         PowerupType powerupType;
         int animationFrame = 0;
         boolean clicked = false; // ✅ prevents mass scoring
+        long spawnTime;
+        boolean despawning = false;
 
         public PoppingObject(Rectangle r, String t) {
             rect = r;
             type = t;
             powerupType = null;
+            spawnTime = System.currentTimeMillis();
         }
 
         public PoppingObject(Rectangle r, PowerupType pt) {
             rect = r;
             type = "powerup";
             powerupType = pt;
+            spawnTime = System.currentTimeMillis();
         }
     }
 }
